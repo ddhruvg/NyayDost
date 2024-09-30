@@ -1,11 +1,12 @@
 import os
+from dotenv import load_dotenv
 import openai
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
+load_dotenv()
 
-
-apikey = "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"
+apikey = os.getenv("OPENAI_API_KEY")
 
 client = openai.OpenAI(
     base_url="https://api.groq.com/openai/v1",
