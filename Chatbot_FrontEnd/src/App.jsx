@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import './Chatbot.css'; // Ensure you import the CSS
-
+import axios from 'axios';
+// import cors from cors;
 function Chatbot() {
   const [currentSession, setCurrentSession] = useState(0);
   const [sessions, setSessions] = useState([
@@ -11,22 +13,26 @@ function Chatbot() {
   const [showSettings, setShowSettings] = useState(false); // State for settings popup
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for Hamburger menu
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === '') return;
 
     const newMessages = [...sessions];
     const userMessage = { sender: 'user', text: input };
+
     newMessages[currentSession].push(userMessage);
-    
-    const botResponse = { sender: 'bot', text: "I'm still learning!" };
-    setTimeout(() => {
+    setSessions(newMessages);
+    setInput('');
+
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/query', { query: userMessage.text });
+      // console.log('Response:', response.data);
+      const botResponse = { sender: 'bot', text: response.data.response || "I'm still learning!" };
       const updatedMessages = [...newMessages];
       updatedMessages[currentSession].push(botResponse);
       setSessions(updatedMessages);
-    }, 1000);
-
-    setSessions(newMessages);
-    setInput('');
+    } catch (error) {
+      console.error('Error submitting data:', error);
+    }
   };
 
   const startNewSession = () => {
