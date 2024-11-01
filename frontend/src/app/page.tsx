@@ -95,11 +95,13 @@ export default function Component() {
 
   const handleSend = () => {
     if (inputValue.trim()) {
+      //@ts-ignore
       setMessages([...messages, { type: 'user', content: inputValue }])
       setInputValue('')
       setShowWelcome(false)
       // Simulate bot response
       setTimeout(() => {
+        //@ts-ignore
         setMessages(prev => [...prev, { type: 'bot', content: "I'm processing your query..." }])
       }, 1000)
     }
@@ -112,7 +114,7 @@ export default function Component() {
     setIsSidebarOpen(false)
     setChatSessions(prev => [...prev, { id: Date.now(), title: "New Chat" }])
   }
-
+//@ts-ignore
   const handleQuickPrompt = (prompt) => {
     if (prompt === 'Know Your Case Status') {
       setShowCaseForm(true);
@@ -192,6 +194,7 @@ export default function Component() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
+              
               <a href="https://w198wask7qd.typeform.com/to/mU16VTCT" target="_blank">Fill a Survey Form</a>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -222,18 +225,22 @@ export default function Component() {
           </div>
         ) : (
           messages.map((message, index) => (
+            
             <div
               key={index}
+              //@ts-ignore
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-[80%] p-3 rounded-lg ${
+                  //@ts-ignore
                   message.type === 'user'
                     ? 'bg-purple-600 text-white dark:bg-purple-700 rounded-br-none'
                     : 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white rounded-bl-none'
                 }`}
               >
-                {message.content}
+                {//@ts-ignore
+                message.content}
               </div>
             </div>
           ))
