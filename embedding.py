@@ -3,8 +3,16 @@ import os
 import openai
 from pydantic import BaseModel
 from FunctionList import *
-
-# Load environment variables from .env file
+FunctionList = {
+    "my_case_status": my_case_status,
+    "Age_Wise_Pending_Data": Age_Wise_Pending_Data,
+    "Get_Live_Stream": Get_Live_Stream,
+    "Traffic_Violation_and_E_Challan": Traffic_Violation_and_E_Challan,
+    "Ecourt_mobile_services_app": Ecourt_mobile_services_app,
+    "Fast_Track_Court_services": Fast_Track_Court_services,
+    "Queries_about_judge_appointment": Queries_about_judge_appointment,
+    "Tele_Law_Services": Tele_Law_Services,
+}# Load environment variables from .env file
 load_dotenv()
 
 # Get the API key from environment variables
@@ -74,16 +82,35 @@ I have a set of predefined functions to help users quickly access specific infor
 8. Court Live Stream Lookup (`Get_Live_Stream`):
    - Attempts to find live streams for high courts or the Supreme Court
 
-If a user's query does not match any of these specific functions, I will use a general language model to provide the most relevant response.
-
-Please provide your query, and I'll help you find the most appropriate information."""
+Return me the specifiacally saying only the function name which matches with the objective of message the most.
+If a user's query does not match any of these specific functions return None"""
 
 
 def query_answer(msg):
     """
-    General query handling function
-    Uses the LLM to generate a response if no specific function matches
+    General query handling function.
+    Uses the LLM to generate a response if no specific function matches.
     """
-    return llm_invok(system_prompt, msg)
+    # Call LLM to get the function name based on the user's message
+    a = llm_invok(system_prompt, msg)
 
+    if a == "None":
+        return llm_invok("Answer the user question", msg)
+    else:
+        function_name = a.strip()  # Get the function name from LLM response
+
+        # Remove any single quotes around the function name if present
+        function_name = function_name.strip("'")
+
+        try:
+            # Ensure that the function name is valid and exists in FunctionList
+            function_to_call = FunctionList.get(function_name)
+
+            if function_to_call is not None:
+                # If the function requires parameters, pass them accordingly
+                return function_to_call(msg)  # Pass the necessary parameters
+            else:
+                return llm_invok("Answer to the user query",msg)
+        except Exception as e:
+            return f"An error occurred while calling the function: {str(e)}"
 

@@ -24,7 +24,7 @@ app = FastAPI(
 # CORS configuration
 origins = [
     "http://localhost",
-    "http://localhost:5173",
+    "http://localhost:3000"
     # Add other origins as needed
 ]
 
@@ -43,8 +43,11 @@ app.add_middleware(
     description="Process any general query about legal services")
 async def process_query(item: QueryRequest):
     try:
+        print("Hi")
         response = query_answer(item.query)
-        return {"response": response}
+        print(type(response))
+        print(response)
+        return {"answer": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -123,6 +126,17 @@ async def get_live_stream():
     try:
         response = Get_Live_Stream("Can we watch live stream of Court hearings?")
         return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/", 
+    response_model=dict,
+    summary="Status",
+    description="Server Status")
+async def get_live_stream():
+    try:
+        
+        return {"response": "NyayDost is ready to satisfy you !!!!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

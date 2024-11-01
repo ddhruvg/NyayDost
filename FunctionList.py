@@ -5,10 +5,13 @@ import openai
 from dotenv import load_dotenv
 load_dotenv()
 from bs4 import BeautifulSoup
+import googleapiclient.discovery
+import json
 
 
 
 apikey = os.getenv('OPENAI_API_KEY')
+youtube_api=os.getenv('GOOGLE_YOUTUBE_API')
 
 client = openai.OpenAI(
     base_url="https://api.groq.com/openai/v1",
@@ -91,7 +94,7 @@ def my_case_status(msg):
         return "I couldn't detect both the diary number and year. Please provide both to continue."
     
 
-def Age_Wise_Pending_Data():
+def Age_Wise_Pending_Data(msg):
     resp = requests.get("https://njdg.ecourts.gov.in/")
 
     soup = BeautifulSoup(resp.content, "html.parser")
@@ -122,7 +125,7 @@ def Age_Wise_Pending_Data():
         Criminal.append((index[j],cases))
         j+=1
 
-    response = llm_invok("Summarize the Age wise pending data ",f"Age wise pending data is {Civil} of Civil cases and {Criminal} of criminal cases ")
+    response = llm_invok("Summarize the Age wise pending data according to the message ",f"Age wise pending data is {Civil} of Civil cases and {Criminal} of criminal cases ",msg)
     return response
 
 def Card_Header():
@@ -257,7 +260,7 @@ def Traffic_Violation_and_E_Challan(msg):
     return llm_invok(system_prompt,msg)
 
 def Ecourt_mobile_services_app(msg):
-    system_prompt = """answer the following msg according to the given paragraph : The eCourts Services app, developed by the National Informatics Centre under the guidance of the eCommittee of the Supreme Court of India, provides essential judicial information and services to the public. It allows users to easily access case details, check case status, and view judgments across all courts in India. Key features include locating nearby courts, tracking case hearings, obtaining case details like case history, orders, and judgments, as well as receiving automatic case alerts. The app aims to improve transparency, streamline access to judicial information, and reduce the need for physical visits to courts.
+    system_prompt = """answer the following msg according to the given paragraph and return the app link for user : The eCourts Services app, developed by the National Informatics Centre under the guidance of the eCommittee of the Supreme Court of India, provides essential judicial information and services to the public. It allows users to easily access case details, check case status, and view judgments across all courts in India. Key features include locating nearby courts, tracking case hearings, obtaining case details like case history, orders, and judgments, as well as receiving automatic case alerts. The app aims to improve transparency, streamline access to judicial information, and reduce the need for physical visits to courts.
 
 You can download the eCourts Services app here: https://play.google.com/store/apps/details?id=com.servicesinfo.ecourtservices&hl=en_US for Android users.
 
@@ -308,12 +311,121 @@ Definitely, a technology driven legal activism policy like this, has to go throu
     return llm_invok(sys_prompt,msg)
 
 
+def channel_id(channel_id):
+    # Define API service name and version
+    api_service_name = "youtube"
+    api_version = "v3"
+    api_key = youtube_api  # Replace with your API key
+
+    # Create a YouTube client
+    youtube = googleapiclient.discovery.build(api_service_name, api_version, developerKey=api_key)
+
+    # Make a request to the YouTube API
+    request = youtube.search().list(
+        part="snippet",
+        channelId=channel_id,  # Use the passed channel ID
+        eventType="live",
+        maxResults=25,
+        q="live",
+        type="video"
+    )
+    
+    # Execute the request and get the response
+    result = request.execute()
+    video_playlist = {}
+    for item in result['items']:
+        video_title = item['snippet']['title']
+        video_url = f"https://www.youtube.com/watch?v={item['id']['videoId']}"
+        video_playlist[video_title] = video_url
+    
+    # Return the response
+    return video_playlist
+
+
+
 def Get_Live_Stream(msg):
     """
-    A dummy function for court live stream lookup
-    Always returns that no live stream was found
+    Function to check for live streams from Indian courts based on user input.
+    Uses llm_invok to determine which court is being asked about.
     """
-    # Check if the message specifically mentions a high court or Supreme Court
-    if any(court in msg.lower() for court in ['supreme court', 'high court']):
-        print("Searched for live streams, but no current live streams found.")
-        return "No live streams are currently available for the requested court."
+
+    # System prompt to extract court name from the user message
+    sys_prompt = """You are a helpful assistant that extracts the name of the court mentioned in the user's message. 
+    The courts to look for include:
+    - Supreme Court of India
+    - Gujarat High Court
+    - Karnataka High Court
+    - Delhi High Court
+    - Bombay High Court
+    - Patna High Court
+    - Gauhati High Court
+    - Calcutta High Court
+    - Madras High Court
+    - Allahabad High Court
+    - Andhra Pradesh High Court
+    - Chattisgarh High Court
+    - Himachal Pradesh High Court
+    - Jammu & Kashmir High Court
+    - Jharkhand High Court
+    - Kerala High Court
+    - Madhya Pradesh High Court
+    - Meghalaya High Court
+    - Orissa High Court
+    - Punjab & Haryana High Court
+    - Rajasthan High Court
+    - Sikkim High Court
+    - Telangana High Court
+    - Tripura High Court
+    - Uttarakhand High Court
+    
+    Please extract the court name from the following message: "{msg}"
+    """
+
+    # Use llm_invok to get the court name from the user's message
+    court_name = llm_invok(sys_prompt, msg)
+
+    # Check if a court name was returned
+    if court_name:
+        # Assuming you have a mapping of court names to their channel IDs
+        court_id_map = {
+            "Supreme Court of India": "UCNPfqOXB7cg2jrNerfWzlVQ",
+            "Gujarat High Court": "UCZoBFtdYPm8tBfGDzf4jsUg",
+            "Karnataka High Court": "UCIFBFfssHWEZRAwL0zXGJBw",
+            "Delhi High Court": "UCmieM-QYWkp91Av-Y2CakYQ",
+            "Bombay High Court": "UCO-ztnBfSTHWlQHD2ZFLyiQ",
+            "Patna High Court": "UCvb5s5UdLjpaiDpBeaCxVEw",
+            "Gauhati High Court": "UCmGt6PmPpCzPmOgE-MWJLug",
+            "Calcutta High Court": "UCZrLnL_M6pfY53a9mKvtmdA",
+            "Madras High Court": "UCA6M8dZblz6URMiWdBK6uOg",
+            "Allahabad High Court": "UCMFYbZwJkDIYRGqExYHh27A",
+            "Andhra Pradesh High Court": "UCn5q10z3Q2VdgfuKQwfSS8w",
+            "Chattisgarh High Court": "UCW8643pYsVLZMN4CbcSeTHw",
+            "Himachal Pradesh High Court": "UCsnwxgawZ-Jp-_4sWl8UTwA",
+            "Jammu & Kashmir High Court": "UCHgTFDLsPQMDt_Y7kHkeKfw",
+            "Jharkhand High Court": "UC43OwYFDEuS8OrK_PSIabSg",
+            "Kerala High Court": "UCONqfqsw_DX8A4BALysSYlg",
+            "Madhya Pradesh High Court": "UCCIVFftzmBqzBKoijOmIl1A",
+            "Meghalaya High Court": "UCAlulU0MrUQkOLQzS_Trf8Q",
+            "Orissa High Court": "UCtTgN30THhZfQ6sQ_v3KBHQ",
+            "Punjab & Haryana High Court": "UCvSsuoGMuTNqz26dxVhYzqQ",
+            "Rajasthan High Court": "UCMOPtsAY1BmFJbyX0VP9hVg",
+            "Sikkim High Court": "UCM0TYJJWZToW02_sQ85x0Qg",
+            "Telangana High Court": "UC2t0yf5X9OEktsdXTrUsK4w",
+            "Tripura High Court": "UCsI5L97cCA3oYKmR-d-hR-Q",
+            "Uttarakhand High Court": "UCG25XfkyzDDeTVYYJBcqisg"
+        }
+
+        channel_id = court_id_map.get(court_name.strip())
+        
+        if channel_id:
+            video_playlist = channel_id(channel_id)  # Call the channel_id function with the detected channel ID
+            if video_playlist:
+                response = f"Here are the list of videos on {court_name} YouTube channel with live court case hearings:\n"
+                response += "\n".join([f"{title}: {url}" for title, url in video_playlist.items()])
+                return response
+            else:
+                return f"No live streams are currently available for {court_name}."
+        else:
+            return "Court not found in the channel ID mapping."
+    else:
+        return "No specific court mentioned in your request."
